@@ -23,31 +23,31 @@ export default async function handler(req, res) {
     '2:3': 'vertical portrait format, 2:3 aspect ratio',
   };
 
-  const metaAIAspectHint = aspectRatioMap[aspectRatio] || 'square composition';
+  const metaAIAspectHint = aspectRatio ? (aspectRatioMap[aspectRatio] || null) : null;
 
-  const systemPrompt = `You are an expert agricultural educator and AI image prompt engineer specializing in farm and agricultural educational content. 
+  const systemPrompt = `You are an expert agricultural educator and AI image prompt engineer specializing in farm and agricultural educational content.
 
-Your task is to generate detailed, vivid image prompts optimized for Meta AI (Imagine), Midjourney, DALL-E, and Stable Diffusion. 
+Your task is to generate detailed, vivid image prompts optimized for Meta AI (Imagine), Midjourney, DALL-E, and Stable Diffusion.
 
 Rules:
 - Always focus on educational and realistic farm/agricultural content
 - Include specific photographic/artistic details: lighting, camera angle, depth of field, color palette
 - Make prompts educational and informative in nature
-- Include the exact aspect ratio instruction in the prompt
+- If aspect ratio is specified, include the exact aspect ratio instruction in the prompt
 - Generate prompts that are safe, positive, and family-friendly
-- Avoid negative prompts in the main prompt text
-- Output ONLY the image prompt, nothing else - no explanation, no preamble`;
+- When a field says "let AI decide" or is unspecified, freely choose the most fitting option
+- Output ONLY the image prompt, nothing else - no explanation, no preamble, no labels`;
 
   const userPrompt = `Generate a detailed AI image prompt for the following farm/agricultural educational content:
 
 Topic: ${topic}
-Visual Style: ${style || 'photorealistic'}
-Mood/Atmosphere: ${mood || 'bright and educational'}
-Season: ${season || 'any season'}
-Educational Level: ${educationalLevel || 'general audience'}
-Aspect Ratio: ${metaAIAspectHint}
+${style ? `Visual Style: ${style}` : 'Visual Style: (choose the most fitting style for this farm topic)'}
+${mood ? `Mood/Atmosphere: ${mood}` : 'Mood/Atmosphere: (choose naturally based on the topic)'}
+${season ? `Season: ${season}` : 'Season: (choose what fits best visually)'}
+${educationalLevel ? `Educational Level: ${educationalLevel}` : 'Educational Level: (general audience)'}
+${metaAIAspectHint ? `Aspect Ratio: ${metaAIAspectHint}` : 'Aspect Ratio: (no specific ratio required — choose freely)'}
 
-Generate ONE comprehensive, detailed image prompt that would work perfectly in Meta AI (Imagine) or Midjourney. Include: subject details, lighting, camera angle, artistic style, color palette, and the aspect ratio specification. The prompt should be educational and showcase farm/agricultural knowledge.`;
+Generate ONE comprehensive, detailed image prompt that would work perfectly in Meta AI (Imagine) or Midjourney. Include: subject details, lighting, camera angle, artistic style, color palette${metaAIAspectHint ? ', and the aspect ratio specification' : ''}. The prompt should be educational and showcase farm/agricultural knowledge.`;
 
   try {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
