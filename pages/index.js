@@ -1,6 +1,9 @@
 import Head from 'next/head';
 import { useState, useRef, useEffect } from 'react';
 
+// MUST be declared first — used in all arrays below
+const NONE = '— None / Let AI decide —';
+
 const ASPECT_RATIOS = [
   { id: 'none', label: 'None', w: 36, h: 36, desc: 'Let AI decide', isNone: true },
   { id: '1:1', label: '1 : 1', w: 40, h: 40, desc: 'Square' },
@@ -48,9 +51,7 @@ const MOODS = [
 ];
 
 const SEASONS = [NONE, 'Dry season', 'Wet season / Monsoon', 'Harvest time', 'Planting season'];
-const LEVELS = [NONE, 'General audience', 'Elementary students', 'High school', 'College / University', 'Farming professionals'];
-
-const NONE = '— None / Let AI decide —';
+const LEVELS  = [NONE, 'General audience', 'Elementary students', 'High school', 'College / University', 'Farming professionals'];
 
 const FARM_EMOJIS = ['🌾', '🌱', '🚜', '🐄', '🌽', '🍅', '🥬', '🌿', '🐔', '🌻'];
 
@@ -92,9 +93,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (result?.prompt) {
-      animatePrompt(result.prompt);
-    }
+    if (result?.prompt) animatePrompt(result.prompt);
   }, [result]);
 
   const generate = async () => {
@@ -102,13 +101,11 @@ export default function Home() {
       setError('Please enter a farm topic to generate a prompt.');
       return;
     }
-
     setError('');
     setLoading(true);
     setResult(null);
 
-    // Strip "None" selections — send null so backend lets AI decide freely
-    const isNone = (v) => v === NONE;
+    const isNone = (v) => !v || v === NONE;
 
     try {
       const res = await fetch('/api/generate', {
@@ -125,14 +122,9 @@ export default function Home() {
       });
 
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Generation failed');
-      }
+      if (!res.ok) throw new Error(data.error || 'Generation failed');
 
       setResult(data);
-
-      // Add to history
       setHistory(prev => [{
         topic,
         prompt: data.prompt,
@@ -157,8 +149,7 @@ export default function Home() {
 
   const openMetaAI = () => {
     if (!result?.prompt) return;
-    const encoded = encodeURIComponent(result.prompt);
-    window.open(`https://www.meta.ai/?q=${encoded}`, '_blank');
+    window.open(`https://www.meta.ai/?q=${encodeURIComponent(result.prompt)}`, '_blank');
   };
 
   const loadFromHistory = (item) => {
@@ -181,7 +172,7 @@ export default function Home() {
       </Head>
 
       <div className="container">
-        {/* Header */}
+
         <header className="header">
           <svg className="wheat-deco left" width="80" height="140" viewBox="0 0 80 140" fill="none">
             <path d="M40 130 Q38 100 35 80 Q30 60 20 45" stroke="#4a7040" strokeWidth="2" fill="none"/>
@@ -197,18 +188,13 @@ export default function Home() {
           </svg>
 
           <div className="header-badge">🌱 Farm Educational AI Tool</div>
-          <h1>
-            FarmPrompt
-            <span>Image Prompt Generator</span>
-          </h1>
-          <p>Generate detailed AI image prompts for farm & agricultural education — optimized for Meta AI, Midjourney & DALL-E</p>
+          <h1>FarmPrompt<span>Image Prompt Generator</span></h1>
+          <p>Generate detailed AI image prompts for farm &amp; agricultural education — optimized for Meta AI, Midjourney &amp; DALL-E</p>
         </header>
 
-        {/* Generator Form */}
         <div className="form-card">
           <div className="form-grid">
 
-            {/* Topic */}
             <div className="field full">
               <label>Farm Topic *</label>
               <input
@@ -224,39 +210,34 @@ export default function Home() {
               </datalist>
             </div>
 
-            {/* Style */}
             <div className="field">
               <label>Visual Style</label>
               <select value={style} onChange={e => setStyle(e.target.value)}>
-                {STYLES.map(s => <option key={s}>{s}</option>)}
+                {STYLES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
 
-            {/* Mood */}
             <div className="field">
               <label>Mood / Atmosphere</label>
               <select value={mood} onChange={e => setMood(e.target.value)}>
-                {MOODS.map(m => <option key={m}>{m}</option>)}
+                {MOODS.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
 
-            {/* Season */}
             <div className="field">
               <label>Season</label>
               <select value={season} onChange={e => setSeason(e.target.value)}>
-                {SEASONS.map(s => <option key={s}>{s}</option>)}
+                {SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
 
-            {/* Educational Level */}
             <div className="field">
               <label>Audience Level</label>
               <select value={level} onChange={e => setLevel(e.target.value)}>
-                {LEVELS.map(l => <option key={l}>{l}</option>)}
+                {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
               </select>
             </div>
 
-            {/* Aspect Ratio */}
             <div className="field full">
               <label>Aspect Ratio</label>
               <div className="aspect-grid">
@@ -267,14 +248,10 @@ export default function Home() {
                     onClick={() => setAspectRatio(ar.id)}
                     type="button"
                   >
-                    {ar.isNone ? (
-                      <span style={{ fontSize: '18px', lineHeight: 1 }}>✦</span>
-                    ) : (
-                      <div
-                        className="aspect-preview"
-                        style={{ width: ar.w * 0.7, height: ar.h * 0.7 }}
-                      />
-                    )}
+                    {ar.isNone
+                      ? <span style={{ fontSize: '18px', lineHeight: 1 }}>✦</span>
+                      : <div className="aspect-preview" style={{ width: ar.w * 0.7, height: ar.h * 0.7 }} />
+                    }
                     <span className="aspect-label">{ar.label}</span>
                     <span style={{ fontSize: '10px', color: 'inherit', opacity: 0.7 }}>{ar.desc}</span>
                   </button>
@@ -299,10 +276,9 @@ export default function Home() {
             Powered by Meta Llama 4 via Groq (free) · Ctrl+Enter to generate
           </p>
 
-          {error && <div className={`error-msg ${error ? 'show' : ''}`}>{error}</div>}
+          {error && <div className="error-msg show">{error}</div>}
         </div>
 
-        {/* Result */}
         <div className={`result-card ${result ? 'visible' : ''}`}>
           <div className="result-header">
             <div className="result-label">
@@ -311,47 +287,25 @@ export default function Home() {
             </div>
             {result && (
               <span className="model-badge">
-                {result.model?.includes('llama-4') ? '🦙 Llama 4 Scout' : '🦙 Llama 3.3 70B'} · {result.aspectRatio}
+                {result.model?.includes('llama-4') ? '🦙 Llama 4 Scout' : '🦙 Llama 3.3 70B'} · {result.aspectRatio || 'auto'}
               </span>
             )}
           </div>
 
-          {loading ? (
-            <>
-              <div className="skeleton" style={{ width: '100%' }} />
-              <div className="skeleton" style={{ width: '85%' }} />
-              <div className="skeleton" style={{ width: '92%' }} />
-              <div className="skeleton" style={{ width: '70%' }} />
-            </>
-          ) : (
-            <div className="prompt-output">
-              <span ref={promptRef} />
-            </div>
-          )}
+          <div className="prompt-output">
+            <span ref={promptRef} />
+          </div>
 
           <div className="action-row">
-            <button
-              className={`action-btn copy-btn ${copied ? 'copied' : ''}`}
-              onClick={copyPrompt}
-            >
+            <button className={`action-btn copy-btn ${copied ? 'copied' : ''}`} onClick={copyPrompt}>
               {copied ? '✓ Copied!' : '⎘ Copy Prompt'}
             </button>
-
-            <button
-              className="action-btn meta-btn"
-              onClick={openMetaAI}
-              title="Open in Meta AI Imagine"
-            >
+            <button className="action-btn meta-btn" onClick={openMetaAI}>
               ✦ Use in Meta AI
             </button>
-
             <button
               className="action-btn copy-btn"
-              onClick={() => {
-                const text = result?.prompt || '';
-                const encoded = encodeURIComponent(text);
-                window.open(`https://www.midjourney.com/imagine?q=${encoded}`, '_blank');
-              }}
+              onClick={() => window.open(`https://www.midjourney.com/imagine?q=${encodeURIComponent(result?.prompt || '')}`, '_blank')}
             >
               🎨 Try Midjourney
             </button>
@@ -362,18 +316,15 @@ export default function Home() {
               <p style={{ fontSize: '11px', color: 'var(--bark)', lineHeight: 1.6 }}>
                 <strong style={{ color: 'var(--sage-dark)' }}>💡 Meta AI Tip:</strong> Paste this prompt into{' '}
                 <a href="https://www.meta.ai" target="_blank" rel="noreferrer" style={{ color: 'var(--sage-dark)' }}>meta.ai</a>
-                {' '}and type <em>"Imagine: [paste prompt]"</em> or click the image icon. The aspect ratio is already embedded in the prompt.
+                {' '}and type <em>"Imagine: [paste prompt]"</em> or click the image icon.
               </p>
             </div>
           )}
         </div>
 
-        {/* History */}
         {history.length > 0 && (
           <div className="history-section">
-            <h2 className="section-title">
-              🕐 Recent Prompts
-            </h2>
+            <h2 className="section-title">🕐 Recent Prompts</h2>
             <div className="history-list">
               {history.map(item => (
                 <div key={item.id} className="history-item" onClick={() => loadFromHistory(item)}>
@@ -382,16 +333,15 @@ export default function Home() {
                     <div className="history-topic">{item.topic}</div>
                     <div className="history-preview">{item.prompt}</div>
                   </div>
-                  <span className="history-ratio">{item.aspectRatio}</span>
+                  <span className="history-ratio">{item.aspectRatio === 'none' ? 'auto' : item.aspectRatio}</span>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Footer */}
         <footer className="footer">
-          <p>FarmPrompt — Built for Filipino farmers & agricultural educators 🌾</p>
+          <p>FarmPrompt — Built for Filipino farmers &amp; agricultural educators 🌾</p>
           <p style={{ marginTop: '4px' }}>
             Free forever · Powered by{' '}
             <a href="https://console.groq.com" target="_blank" rel="noreferrer">Groq</a>
@@ -399,6 +349,7 @@ export default function Home() {
             <a href="https://llama.com" target="_blank" rel="noreferrer">Meta Llama</a>
           </p>
         </footer>
+
       </div>
     </>
   );
