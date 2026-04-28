@@ -180,12 +180,16 @@ select {
 /* Aspect ratio grid */
 .aspect-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
   grid-column: 1 / -1;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 520px) {
+  .aspect-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 380px) {
   .aspect-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
@@ -224,6 +228,24 @@ select {
 
 .aspect-btn.active .aspect-preview {
   opacity: 1;
+}
+
+.aspect-btn.aspect-none {
+  border-style: dashed;
+  color: var(--bark);
+  opacity: 0.75;
+}
+
+.aspect-btn.aspect-none.active {
+  border-color: var(--sage);
+  border-style: dashed;
+  opacity: 1;
+  color: var(--leaf);
+}
+
+select option:first-child {
+  color: var(--bark);
+  font-style: italic;
 }
 
 .aspect-label {
