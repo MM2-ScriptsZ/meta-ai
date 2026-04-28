@@ -2,6 +2,7 @@ import Head from 'next/head';
 import { useState, useRef, useEffect } from 'react';
 
 const ASPECT_RATIOS = [
+  { id: 'none', label: 'None', w: 36, h: 36, desc: 'Let AI decide', isNone: true },
   { id: '1:1', label: '1 : 1', w: 40, h: 40, desc: 'Square' },
   { id: '16:9', label: '16 : 9', w: 52, h: 29, desc: 'Landscape' },
   { id: '9:16', label: '9 : 16', w: 29, h: 52, desc: 'Portrait' },
@@ -24,6 +25,7 @@ const FARM_TOPICS = [
 ];
 
 const STYLES = [
+  NONE,
   'Photorealistic',
   'Educational illustration',
   'Watercolor painting',
@@ -35,6 +37,7 @@ const STYLES = [
 ];
 
 const MOODS = [
+  NONE,
   'Bright and educational',
   'Golden hour warmth',
   'Morning mist atmosphere',
@@ -44,17 +47,19 @@ const MOODS = [
   'Rustic and authentic',
 ];
 
-const SEASONS = ['Any season', 'Dry season', 'Wet season / Monsoon', 'Harvest time', 'Planting season'];
-const LEVELS = ['General audience', 'Elementary students', 'High school', 'College / University', 'Farming professionals'];
+const SEASONS = [NONE, 'Dry season', 'Wet season / Monsoon', 'Harvest time', 'Planting season'];
+const LEVELS = [NONE, 'General audience', 'Elementary students', 'High school', 'College / University', 'Farming professionals'];
+
+const NONE = '— None / Let AI decide —';
 
 const FARM_EMOJIS = ['🌾', '🌱', '🚜', '🐄', '🌽', '🍅', '🥬', '🌿', '🐔', '🌻'];
 
 export default function Home() {
   const [topic, setTopic] = useState('');
-  const [style, setStyle] = useState('Photorealistic');
-  const [mood, setMood] = useState('Bright and educational');
-  const [season, setSeason] = useState('Any season');
-  const [level, setLevel] = useState('General audience');
+  const [style, setStyle] = useState(NONE);
+  const [mood, setMood] = useState(NONE);
+  const [season, setSeason] = useState(NONE);
+  const [level, setLevel] = useState(NONE);
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -102,11 +107,21 @@ export default function Home() {
     setLoading(true);
     setResult(null);
 
+    // Strip "None" selections — send null so backend lets AI decide freely
+    const isNone = (v) => v === NONE;
+
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, style, mood, season, educationalLevel: level, aspectRatio }),
+        body: JSON.stringify({
+          topic,
+          style:            isNone(style)  ? null : style,
+          mood:             isNone(mood)   ? null : mood,
+          season:           isNone(season) ? null : season,
+          educationalLevel: isNone(level)  ? null : level,
+          aspectRatio:      aspectRatio === 'none' ? null : aspectRatio,
+        }),
       });
 
       const data = await res.json();
@@ -248,14 +263,18 @@ export default function Home() {
                 {ASPECT_RATIOS.map(ar => (
                   <button
                     key={ar.id}
-                    className={`aspect-btn ${aspectRatio === ar.id ? 'active' : ''}`}
+                    className={`aspect-btn ${aspectRatio === ar.id ? 'active' : ''} ${ar.isNone ? 'aspect-none' : ''}`}
                     onClick={() => setAspectRatio(ar.id)}
                     type="button"
                   >
-                    <div
-                      className="aspect-preview"
-                      style={{ width: ar.w * 0.7, height: ar.h * 0.7 }}
-                    />
+                    {ar.isNone ? (
+                      <span style={{ fontSize: '18px', lineHeight: 1 }}>✦</span>
+                    ) : (
+                      <div
+                        className="aspect-preview"
+                        style={{ width: ar.w * 0.7, height: ar.h * 0.7 }}
+                      />
+                    )}
                     <span className="aspect-label">{ar.label}</span>
                     <span style={{ fontSize: '10px', color: 'inherit', opacity: 0.7 }}>{ar.desc}</span>
                   </button>
